@@ -30,7 +30,7 @@ where
         let morph_type = type_column.unwrap_or_else(|| format!("{}_type", name));
         let morph_id = id_column.unwrap_or_else(|| format!("{}_id", name));
         let local_key = local_key.unwrap_or_else(|| T::primary_key().to_string());
-        
+
         Self {
             parent,
             morph_type,
@@ -102,10 +102,17 @@ where
     }
 
     fn get_query(&self) -> Query<R> {
-        Query::new()
-            // This would add the polymorphic constraints
-            // .where_clause(&self.morph_type, &self.get_morph_type())
-            // .where_clause(&self.morph_id, &parent_key_value)
+        let mut q = Query::new();
+        // Add polymorphic constraints if parent key exists
+        if let Some(val) = self.parent.get_key_value() {
+            if let Some(id_str) = val.as_i64().map(|n| n.to_string()).or_else(|| val.as_str().map(|s| s.to_string())) {
+                q = q.where_clause(&self.morph_type, &self.get_morph_type())
+                     .where_clause(&self.morph_id, &id_str);
+            }
+        } else {
+            q = q.where_clause(&self.morph_type, &self.get_morph_type());
+        }
+        q
     }
 }
 

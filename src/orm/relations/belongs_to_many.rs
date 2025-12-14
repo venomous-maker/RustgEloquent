@@ -119,10 +119,24 @@ where
     }
 
     fn get_query(&self) -> Query<R> {
-        Query::new()
-            // This would join with the pivot table
-            // .join(&self.table, &self.related_pivot_key, "=", &format!("{}.{}", R::table_name(), &self.related_key))
-            // .where_clause(&format!("{}.{}", &self.table, &self.foreign_pivot_key), &parent_key_value)
+        // Build a base query for the related model
+        let mut q = Query::new();
+
+        // Try to get the parent's primary key value
+        if let Some(val) = self.parent.get_key_value() {
+            // Only handle simple number/string keys for now
+            if let Some(id_str) = val.as_i64().map(|n| n.to_string()).or_else(|| val.as_str().map(|s| s.to_string())) {
+                // Join pivot table to related table and filter by pivot foreign key
+                let pivot_foreign_col = format!("{}.{}", self.table, self.foreign_pivot_key);
+                let pivot_related_col = format!("{}.{}", self.table, self.related_pivot_key);
+                let related_full_key = format!("{}.{}", R::table_name(), &self.related_key);
+
+                q = q.join(&self.table, &pivot_related_col, "=", &related_full_key)
+                     .where_clause(&pivot_foreign_col, &id_str);
+            }
+        }
+
+        q
     }
 }
 
