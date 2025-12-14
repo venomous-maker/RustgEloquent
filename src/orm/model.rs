@@ -25,6 +25,12 @@ pub trait Model: Serialize + for<'de> Deserialize<'de> + Send + Sync + Clone + '
         Self::primary_key()
     }
 
+    // Instance helper to retrieve the primary key value from attributes
+    // Default: not all models will provide attribute access; implementations that can should override
+    fn get_key_value(&self) -> Option<serde_json::Value> {
+        None
+    }
+
     // Database operations
     async fn find(id: i64) -> Result<Option<Self>, sqlx::Error>;
     async fn all() -> Result<Vec<Self>, sqlx::Error>;

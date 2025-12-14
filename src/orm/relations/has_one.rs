@@ -74,9 +74,13 @@ where
     }
 
     fn get_query(&self) -> Query<R> {
-        Query::new()
-            // This would add the foreign key constraint
-            // .where_clause(&self.foreign_key, &parent_key_value)
+        let mut q = Query::new();
+        if let Some(val) = self.parent.get_key_value() {
+            if let Some(id_str) = val.as_i64().map(|n| n.to_string()).or_else(|| val.as_str().map(|s| s.to_string())) {
+                q = q.where_clause(&self.foreign_key, &id_str);
+            }
+        }
+        q
     }
 }
 

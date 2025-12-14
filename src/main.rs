@@ -51,6 +51,11 @@ impl Model for User {
     async fn update(&mut self, _attributes: HashMap<String, serde_json::Value>) -> Result<(), sqlx::Error> {
         Ok(())
     }
+
+    // Provide key value
+    fn get_key_value(&self) -> Option<serde_json::Value> {
+        self.id.map(|v| serde_json::Value::Number(serde_json::Number::from(v)))
+    }
 }
 
 impl Eloquent for User {}
